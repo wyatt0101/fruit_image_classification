@@ -1,0 +1,13 @@
+原始数据集
+batch_size = 32
+epoch = 20
+              precision    recall  f1-score   support
+
+       apple       0.90      0.95      0.92        19
+      banana       0.85      0.94      0.89        18
+       mixed       1.00      0.40      0.57         5
+      orange       1.00      1.00      1.00        18
+
+    accuracy                           0.92        60
+   macro avg       0.94      0.82      0.85        60
+weighted avg       0.92      0.92      0.91        60

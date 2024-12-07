@@ -1,0 +1,11 @@
+              precision    recall  f1-score   support
+
+       apple       1.00      1.00      1.00        19
+      banana       1.00      1.00      1.00        18
+       mixed       1.00      0.80      0.89         5
+      orange       0.95      1.00      0.97        18
+
+    accuracy                           0.98        60
+   macro avg       0.99      0.95      0.97        60
+weighted avg       0.98      0.98      0.98        60
+
