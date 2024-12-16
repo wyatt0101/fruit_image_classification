@@ -1,54 +1,10 @@
-原始数据集+增强1
-batch_size = 16
-epoch = 20
               precision    recall  f1-score   support
 
-       apple       0.95      1.00      0.97        19
+       apple       0.90      1.00      0.95        19
       banana       1.00      0.89      0.94        18
-       mixed       1.00      0.80      0.89         5
-      orange       0.90      1.00      0.95        18
+       mixed       0.80      0.80      0.80         5
+      orange       1.00      1.00      1.00        18
 
     accuracy                           0.95        60
-   macro avg       0.96      0.92      0.94        60
+   macro avg       0.93      0.92      0.92        60
 weighted avg       0.95      0.95      0.95        60
-
-增强1：
-# 定义几何变换组合（如旋转、翻转、剪切）
-geometric_transforms = transforms.Compose([
-    transforms.RandomRotation(45),                  # 随机旋转 ±45 度
-    transforms.RandomHorizontalFlip(),              # 随机水平翻转
-    transforms.RandomVerticalFlip(),                # 随机垂直翻转
-    transforms.RandomAffine(degrees=0, shear=15)    # 随机剪切变换
-])
-
-# 定义尺度变换组合（如缩放和平移）
-scaling_transforms = transforms.Compose([
-    transforms.RandomResizedCrop(64, scale=(0.8, 1.2)),         # 随机缩放并裁剪至 64x64
-    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1))    # 随机平移图像
-])
-
-# 定义颜色变换组合（如亮度、对比度、色调等）
-color_transforms = transforms.Compose([
-    transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1)  # 调整图像亮度、对比度、饱和度和色调
-])
-
-# 定义噪声添加组合（需要先转换为张量）
-noise_transforms = transforms.Compose([
-    transforms.ToTensor(),                                  # 将图像转换为张量（Tensor）
-    transforms.GaussianBlur(kernel_size=3),                 # 添加高斯模糊，模拟噪声
-    transforms.RandomErasing(p=0.5, scale=(0.02, 0.1)),     # 随机擦除部分图像
-    transforms.ToPILImage()                                 # 将张量转换回 PIL 图像，用于保存
-])
-
-# 定义综合变换组合（结合多种增强方法）
-combined_transforms = transforms.Compose([
-    transforms.RandomRotation(20),                              # 随机旋转 ±20 度
-    transforms.RandomHorizontalFlip(),                          # 随机水平翻转
-    transforms.ColorJitter(brightness=0.3, contrast=0.3),       # 颜色调整
-    transforms.RandomAffine(degrees=0, shear=10),               # 随机剪切
-    transforms.RandomResizedCrop(64, scale=(0.9, 1.1))          # 随机缩放并裁剪
-])
-
-# origin+argumentation
-enhance_round = 1
-mix_enhance_round = 5

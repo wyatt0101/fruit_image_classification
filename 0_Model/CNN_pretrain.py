@@ -8,6 +8,10 @@ from tqdm import tqdm
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from sklearn.preprocessing import label_binarize
+import seaborn as sns
+from sklearn.metrics import roc_curve, auc
+from itertools import cycle
 
 
 # 数据加载与预处理
@@ -36,6 +40,7 @@ def evaluate(model, data_loader, criterion, device):
     total = 0
     all_preds = []
     all_labels = []
+    all_probs = []  # 新增：保存预测概率
 
     with torch.no_grad():  # 禁用梯度计算
         for images, labels in data_loader:
@@ -53,9 +58,13 @@ def evaluate(model, data_loader, criterion, device):
             all_preds.extend(predicted.cpu().numpy())  # 记录预测值
             all_labels.extend(labels.cpu().numpy())  # 记录真实标签
 
+            # 记录预测概率
+            probs = torch.softmax(outputs, dim=1)  # 使用 softmax 获取每一类的概率
+            all_probs.extend(probs.cpu().numpy())
+
     avg_loss = running_loss / len(data_loader)  # 平均损失
     accuracy = 100 * correct / total  # 准确率
-    return avg_loss, accuracy, all_preds, all_labels
+    return avg_loss, accuracy, all_preds, all_labels, all_probs
 
 
 # 定义训练函数
@@ -93,7 +102,7 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, num_epoc
         train_accuracies.append(train_accuracy)
 
         # 在测试集上评估模型
-        test_loss, test_accuracy, all_preds, all_labels = evaluate(model, test_loader, criterion, device)
+        test_loss, test_accuracy, all_preds, all_labels, _ = evaluate(model, test_loader, criterion, device)
         test_losses.append(test_loss)
         test_accuracies.append(test_accuracy)
 
@@ -113,6 +122,10 @@ def train_model(model, train_loader, test_loader, criterion, optimizer, num_epoc
             with open('best_classification_report.txt', 'w') as f:
                 f.write(report)
             print("分类报告已保存。\n")
+
+            # 生成并保存混淆矩阵图像
+            confusion_matrix_path = 'confusion_matrix.png'
+            plot_confusion_matrix(all_labels, all_preds, class_names, confusion_matrix_path)
 
         # 使用 ReduceLROnPlateau 调度器（如果有调度器）
         if scheduler:
@@ -151,6 +164,67 @@ def plot_metrics(train_losses, train_accuracies, test_losses, test_accuracies, s
     plt.show()
 
 
+# 添加绘制混淆矩阵的函数
+def plot_confusion_matrix(y_true, y_pred, class_names, save_path):
+    from sklearn.metrics import confusion_matrix
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)  # 保存混淆矩阵图像
+    print(f"混淆矩阵图像已保存至 {save_path}")
+    plt.close()
+
+
+def plot_roc_curve(y_true, y_probs, class_names, save_path):
+    """
+    绘制 ROC 曲线
+    :param y_true: 真实标签列表
+    :param y_probs: 每一类的预测概率
+    :param class_names: 类别名称列表
+    :param save_path: ROC 图保存路径
+    """
+    plt.figure(figsize=(10, 8))
+    n_classes = len(class_names)
+    y_true_bin = label_binarize(y_true, classes=range(n_classes))  # 将标签二值化
+
+    fpr = dict()  # 存储每一类的 FPR
+    tpr = dict()  # 存储每一类的 TPR
+    roc_auc = dict()  # 存储每一类的 AUC
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_true_bin[:, i], [p[i] for p in y_probs])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # 绘制每个类别的 ROC 曲线
+    colors = cycle(['blue', 'green', 'red', 'purple', 'orange'])
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2,
+                 label=f'Class {class_names[i]} (AUC = {roc_auc[i]:.2f})')
+
+    # 绘制微平均 ROC 曲线
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_true_bin.ravel(), [p for probs in y_probs for p in probs])
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    plt.plot(fpr["micro"], tpr["micro"], color='deeppink', linestyle=':', linewidth=4,
+             label=f'Micro-average (AUC = {roc_auc["micro"]:.2f})')
+
+    # 绘制对角线
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+
+    plt.title('ROC Curve')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)  # 保存图像
+    print(f"ROC 曲线已保存至 {save_path}")
+    plt.close()
+
+
 # 主函数
 if __name__ == "__main__":
     # 数据路径
@@ -158,7 +232,7 @@ if __name__ == "__main__":
     save_path = 'best_CNN_model.pth'
 
     # 训练模型
-    num_epochs = 3
+    num_epochs = 50
     batch_size = 16
     learning_rate = 0.001
 
@@ -184,6 +258,10 @@ if __name__ == "__main__":
     train_losses, train_accuracies, test_losses, test_accuracies = train_model(
         model, train_loader, test_loader, criterion, optimizer, num_epochs, device, save_path, class_names, scheduler
     )
+
+    # 在测试集上评估模型，生成 ROC 曲线
+    _, _, _, all_labels, all_probs = evaluate(model, test_loader, criterion, device)
+    plot_roc_curve(all_labels, all_probs, class_names, 'roc_curve.png')
 
     # 绘制训练结果
     plot_metrics(train_losses, train_accuracies, test_losses, test_accuracies, 'training_testing_plots.png')

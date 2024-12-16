@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 
 # 设置路径
 source_folder = './2 classified_train_merge_mixed'  # 替换为原始数据集路径
-output_folder = './4 argumentation_train2'  # 替换为增强后数据集的保存路径
+output_folder = './4 augmentation_train2'  # 替换为增强后数据集的保存路径
 
 # 确保输出文件夹存在，如果不存在则创建
 if not os.path.exists(output_folder):
@@ -49,7 +49,7 @@ combined_transforms = transforms.Compose([
     transforms.RandomResizedCrop(64, scale=(0.9, 1.1))          # 随机缩放并裁剪
 ])
 
-# origin+argumentation
+# origin+augmentation
 enhance_round = 1
 mix_enhance_round = 1
 
