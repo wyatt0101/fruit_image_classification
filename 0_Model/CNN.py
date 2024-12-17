@@ -13,41 +13,40 @@ import seaborn as sns
 from sklearn.metrics import roc_curve, auc
 from itertools import cycle
 
-
-# 定义改进后的 CNN 模型
+# Define the improved CNN model
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        # 第一层卷积 + 激活 + 批量归一化 + 池化
+        # First convolutional layer + activation + batch normalization + pooling
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(32)  # 批量归一化
+        self.bn1 = nn.BatchNorm2d(32)  # Batch normalization
         self.pool = nn.MaxPool2d(2, 2)
 
-        # 第二层卷积 + 激活 + 批量归一化 + 池化
+        # Second convolutional layer + activation + batch normalization + pooling
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(64)  # 批量归一化
+        self.bn2 = nn.BatchNorm2d(64)  # Batch normalization
 
-        # 第三层卷积 + 激活 + 批量归一化 + 池化
+        # Third convolutional layer + activation + batch normalization + pooling
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(128)  # 批量归一化
+        self.bn3 = nn.BatchNorm2d(128)  # Batch normalization
 
-        # 全连接层
-        self.fc1 = nn.Linear(128 * 8 * 8, 256)  # 注意修改全连接层输入尺寸
+        # Fully connected layers
+        self.fc1 = nn.Linear(128 * 8 * 8, 256)  # Note to adjust the input size for the fully connected layer
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, 4)
 
-        # Dropout 层
+        # Dropout layer
         self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
-        x = self.pool(torch.relu(self.bn1(self.conv1(x))))  # 卷积层1 + BatchNorm + ReLU + MaxPooling
-        x = self.pool(torch.relu(self.bn2(self.conv2(x))))  # 卷积层2 + BatchNorm + ReLU + MaxPooling
-        x = self.pool(torch.relu(self.bn3(self.conv3(x))))  # 卷积层3 + BatchNorm + ReLU + MaxPooling
-        x = x.view(-1, 128 * 8 * 8)  # 展平操作，注意这里的尺寸要根据实际情况调整
-        x = torch.relu(self.fc1(x))  # 全连接层1
-        x = self.dropout(x)  # Dropout 层
-        x = torch.relu(self.fc2(x))  # 全连接层2
-        x = self.fc3(x)  # 输出层
+        x = self.pool(torch.relu(self.bn1(self.conv1(x))))  # Convolutional layer 1 + BatchNorm + ReLU + MaxPooling
+        x = self.pool(torch.relu(self.bn2(self.conv2(x))))  # Convolutional layer 2 + BatchNorm + ReLU + MaxPooling
+        x = self.pool(torch.relu(self.bn3(self.conv3(x))))  # Convolutional layer 3 + BatchNorm + ReLU + MaxPooling
+        x = x.view(-1, 128 * 8 * 8)     # Flatten the output, note that the size should be adjusted according to the actual case
+        x = torch.relu(self.fc1(x))     # Fully connected layer 1
+        x = self.dropout(x)     # Dropout layer
+        x = torch.relu(self.fc2(x))  # Fully connected layer 2
+        x = self.fc3(x)  # Output layer
         return x
 
 
@@ -60,7 +59,7 @@ def prepare_data(data_dir, batch_size):
     ])
 
     # 加载训练集和测试集
-    train_data = datasets.ImageFolder(root=os.path.join(data_dir, '4 argumentation_train1'), transform=transform)
+    train_data = datasets.ImageFolder(root=os.path.join(data_dir, '2 classified_train_merge_mixed'), transform=transform)
     test_data = datasets.ImageFolder(root=os.path.join(data_dir, '2 classified_test'), transform=transform)
 
     # 数据加载器
@@ -272,7 +271,7 @@ if __name__ == "__main__":
 
     # 训练模型
     num_epochs = 20
-    batch_size = 32
+    batch_size = 16
     learning_rate = 0.001
 
     # 准备数据

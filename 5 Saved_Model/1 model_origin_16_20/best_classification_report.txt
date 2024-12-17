@@ -1,3 +1,4 @@
+
               precision    recall  f1-score   support
 
        apple       0.90      0.95      0.92        19
@@ -8,3 +9,5 @@
     accuracy                           0.90        60
    macro avg       0.92      0.81      0.83        60
 weighted avg       0.90      0.90      0.89        60
+
+
